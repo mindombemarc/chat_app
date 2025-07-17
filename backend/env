@@ -1,5 +1,4 @@
 MONGODB_URI=mongodb+srv://mindombemarc:98GbHxy0jlYPunMx@cluster0.ujdyfrt.mongodb.net/CHAT_APP?retryWrites=true&w=majority&appName=Cluster0
-# mongodb+srv://mindombemarc:y0ncI4sfRMxdjhiC@cluster0.zn6ygpf.mongodb.net/CHAT_APP?retryWrites=true&w=majority&appName=Cluster0
 JWT_SECRET=randomsecretkey
 NODE_ENV=development
 PORT=5000
