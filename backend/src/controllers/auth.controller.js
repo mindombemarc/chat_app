@@ -27,8 +27,6 @@ export const signup = async (req, res) => {
       fullName,
       email,
       password,
-      verificationToken,
-      verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000,
     });
 
     await newUser.save();  // Sauvegarde avant de générer le token
