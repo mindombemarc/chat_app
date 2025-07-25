@@ -28,9 +28,11 @@ const App = () => {
 
   if (isCheckingAuth && !authUser)
     return (
-      <div className="flex items-center gap-3 justify-center h-screen">
-        <span className="loading loading-dots loading-xl"></span> Chargement en cours...
-      </div>
+      <div className="flex items-center gap-3 justify-center h-screen bg-chat-bg bg-cover bg-center bg-no-repeat filter-none text-base font-bold text-black">
+  <span className="loading loading-dots loading-xl text-black"></span>
+  Chargement en cours...
+</div>
+
     );
 
   return (

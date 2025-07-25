@@ -4,7 +4,12 @@ import daisyui from "daisyui";
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      backgroundImage: {
+        // Chemin vers ton image dans le dossier public
+        "chat-bg": "url('./congo.jpg')",
+      },
+    },
   },
   plugins: [daisyui],
   daisyui: {
