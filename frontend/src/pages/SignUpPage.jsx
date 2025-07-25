@@ -126,7 +126,7 @@ const SignUpPage = () => {
                   chargement...
                 </>
               ) : (
-                "Create Account"
+                "Crée un compte"
               )}
             </button>
           </form>

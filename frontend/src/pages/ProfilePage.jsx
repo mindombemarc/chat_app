@@ -65,7 +65,7 @@ const ProfilePage = () => {
             </div>
             <p className="text-sm text-zinc-400">
               {isUpdatingProfile
-                ? "En cours ..."
+                ? "Changement en cours ..."
                 : "Appuie sur l'icône pour changer la photo de profile"}
             </p>
           </div>

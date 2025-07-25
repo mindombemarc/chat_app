@@ -54,7 +54,7 @@ const SettingsPage = () => {
                 <div className="px-4 py-3 border-b border-base-300 bg-base-100">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-medium">
-                      J
+                      
                     </div>
                     <div>
                       <h3 className="font-medium text-sm">Marc Mindombe</h3>
@@ -96,8 +96,8 @@ const SettingsPage = () => {
                     <input
                       type="text"
                       className="input input-bordered flex-1 text-sm h-10"
-                      placeholder="Type a message..."
-                      value="This is a preview"
+                      placeholder="Ecrire  un message..."
+                      value="Ceci Est un exemple"
                       readOnly
                     />
                     <button className="btn btn-primary h-10 min-h-0">
