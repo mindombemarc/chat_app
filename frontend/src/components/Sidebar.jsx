@@ -12,14 +12,23 @@ const Sidebar = () => {
     setSelectedUser,
     isUsersLoading,
     lastMessagesByUser,
-    recentChats, // ✅ nouveau
+    recentChats,
   } = useChatStore();
 
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     getUsers();
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024); // breakpoint lg = 1024px
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [getUsers]);
 
   const filteredUsers = (showOnlineOnly
@@ -38,7 +47,11 @@ const Sidebar = () => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
+    <aside
+      className={`h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200
+        ${isMobile && selectedUser ? "hidden" : "flex"}
+      `}
+    >
       <div className="border-b border-base-300 w-full p-5">
         <div className="flex items-center gap-2">
           <Users className="size-6" />

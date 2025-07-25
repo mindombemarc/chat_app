@@ -9,7 +9,6 @@ const MessageInput = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // --- AUDIO ---
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const [mediaRecorder, setMediaRecorder] = useState(null);
@@ -48,14 +47,12 @@ const MessageInput = () => {
   // Gestion audio
   const handleStartRecording = async () => {
     if (isRecording) {
-      // Stop recording
       mediaRecorder.stop();
       setIsRecording(false);
       clearInterval(recordInterval.current);
       setRecordTime(0);
       return;
     }
-    // Demande permission et démarre
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
@@ -74,7 +71,6 @@ const MessageInput = () => {
         stream.getTracks().forEach((t) => t.stop());
       };
 
-      // Timer d'enregistrement
       let seconds = 0;
       recordInterval.current = setInterval(() => {
         seconds++;
@@ -86,12 +82,10 @@ const MessageInput = () => {
     }
   };
 
-  // Supprimer audio enregistré
   const removeAudio = () => {
     setAudioBlob(null);
   };
 
-  // Envoyer message (texte + image + audio)
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview && !audioBlob) return;
@@ -118,7 +112,6 @@ const MessageInput = () => {
     }
   };
 
-  // Convertir Blob audio en base64 (dataURL)
   const blobToDataURL = (blob) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -127,7 +120,6 @@ const MessageInput = () => {
     });
   };
 
-  // Fermer emoji picker au clic hors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
@@ -139,7 +131,7 @@ const MessageInput = () => {
   }, [showEmojiPicker]);
 
   return (
-    <div className="p-4 w-full relative">
+    <div className="p-4 w-full relative bg-base-100">
       {/* Preview image */}
       {imagePreview && (
         <div className="mb-3 flex items-center gap-2">
@@ -190,17 +182,17 @@ const MessageInput = () => {
         <button
           type="button"
           onClick={() => setShowEmojiPicker((prev) => !prev)}
-          className="btn btn-circle btn-sm text-yellow-500"
+          className="btn btn-circle btn-xs text-yellow-500"
           title="Emoji picker"
         >
-          <Smile size={20} />
+          <Smile size={18} />
         </button>
 
-        {/* Input + image + audio */}
-        <div className="flex-1 flex gap-2 items-center">
+        {/* Input + icons */}
+        <div className="flex-1 flex items-center gap-2">
           <input
             type="text"
-            className="w-full input input-bordered rounded-lg input-sm sm:input-md"
+            className="w-full input input-bordered rounded-lg input-xs sm:input-sm"
             placeholder="Type a message..."
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -216,35 +208,36 @@ const MessageInput = () => {
             disabled={isRecording || !!audioBlob}
           />
 
+          {/* Image button visible only on mobile */}
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            className={`sm:hidden btn btn-circle btn-xs ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
             onClick={() => fileInputRef.current?.click()}
             disabled={isRecording || !!audioBlob}
             title="Add image"
           >
-            <Image size={20} />
+            <Image size={18} />
           </button>
 
           {/* Audio record button */}
           <button
             type="button"
             onClick={handleStartRecording}
-            className={`btn btn-circle ${isRecording ? "btn-error" : "btn-ghost"} text-white-500`}
-            title={isRecording ? `Arreter Enregistrement (${recordTime}s)` : "Enregistrement en cours... "}
+            className={`btn btn-circle btn-xs ${isRecording ? "btn-error" : "btn-ghost"} text-white-500`}
+            title={isRecording ? `Arrêter Enregistrement (${recordTime}s)` : "Démarrer enregistrement"}
           >
-            {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
           </button>
         </div>
 
         {/* Send button */}
         <button
           type="submit"
-          className="btn btn-sm btn-circle"
+          className="btn btn-xs btn-circle"
           disabled={!text.trim() && !imagePreview && !audioBlob}
           title="Send message"
         >
-          <Send size={22} />
+          <Send size={20} />
         </button>
       </form>
     </div>
