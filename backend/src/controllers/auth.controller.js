@@ -1,6 +1,6 @@
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
-import bcrypt from "bcryptjs";
+//import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 import { mailerSendWithEmail } from "../lib/mailSend.js";
 
@@ -18,15 +18,15 @@ export const signup = async (req, res) => {
     const user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "Utilisateur existe déjà" });
 
-    const salt = await bcrypt.genSalt(10);
+    /*const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
-
+*/
     const newUser = new User({
       fullName,
       email,
-      password: hashedPassword,
+      password,
       verificationToken,
       verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000,
     });
@@ -36,12 +36,12 @@ export const signup = async (req, res) => {
     generateToken(newUser._id, res);  // Génère le JWT après sauvegarde
 
     // Envoi mail avec await pour gestion d’erreur possible
-    try {
+    /*try {
       await mailerSendWithEmail(newUser.email, verificationToken);
     } catch (err) {
       console.error("Erreur envoi mail:", err);
       // Optionnel : ne pas bloquer la réponse à l’utilisateur si mail en erreur
-    }
+    }*/
 
     res.status(201).json({
       success: true,
@@ -66,8 +66,14 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Utilisateur non trouvé" });
     }
 
+    /*
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Mot de passe incorrect" });
+    }
+    */
+    const isPasswordInCorrect =  user.password !== password;
+    if (isPasswordInCorrect) {
       return res.status(400).json({ message: "Mot de passe incorrect" });
     }
 
