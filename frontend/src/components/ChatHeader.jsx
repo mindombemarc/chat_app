@@ -12,13 +12,36 @@ const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { user, onlineUsers } = useAuthStore();
 
-  const [callStatus, setCallStatus] = useState("idle"); // idle | calling | in-call
+  const [callStatus, setCallStatus] = useState("idle");
   const [isAudioCall, setIsAudioCall] = useState(false);
   const [isVideoCall, setIsVideoCall] = useState(false);
+  const [showUserInfos, setShowUserInfos] = useState(false);
+  const [showImageFull, setShowImageFull] = useState(false);
 
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(null);
   const peerConnectionRef = useRef(null);
+
+  const createPeerConnection = (targetId) => {
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ice-candidate", {
+          candidate: event.candidate,
+          to: targetId,
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      remoteStreamRef.current = event.streams[0];
+    };
+
+    return pc;
+  };
 
   useEffect(() => {
     socket.on("call-made", async (data) => {
@@ -46,20 +69,15 @@ const ChatHeader = () => {
         to: data.from,
       });
 
-      if (data.isVideo) {
-        setIsVideoCall(true);
-      } else {
-        setIsAudioCall(true);
-      }
-      setCallStatus("in-call"); // ✅ Dès qu'on répond
+      setCallStatus("in-call");
+      data.isVideo ? setIsVideoCall(true) : setIsAudioCall(true);
     });
 
     socket.on("answer-made", async (data) => {
       await peerConnectionRef.current.setRemoteDescription(
         new RTCSessionDescription(data.answer)
       );
-      console.log("✅ Appel accepté !");
-      setCallStatus("in-call"); // 🚀 Démarre compteur
+      setCallStatus("in-call");
     });
 
     socket.on("ice-candidate", (data) => {
@@ -74,36 +92,13 @@ const ChatHeader = () => {
     };
   }, []);
 
-  const createPeerConnection = (targetId) => {
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    });
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("ice-candidate", {
-          candidate: event.candidate,
-          to: targetId,
-        });
-      }
-    };
-
-    pc.ontrack = (event) => {
-      remoteStreamRef.current = event.streams[0];
-    };
-
-    return pc;
-  };
-
   const handleAudioCall = async () => {
     peerConnectionRef.current = createPeerConnection(selectedUser._id);
-
     const localStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: false,
     });
     localStreamRef.current = localStream;
-
     localStream.getTracks().forEach((track) => {
       peerConnectionRef.current.addTrack(track, localStream);
     });
@@ -118,18 +113,16 @@ const ChatHeader = () => {
     });
 
     setIsAudioCall(true);
-    setCallStatus("calling"); // ⏳ En attente
+    setCallStatus("calling");
   };
 
   const handleVideoCall = async () => {
     peerConnectionRef.current = createPeerConnection(selectedUser._id);
-
     const localStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
     });
     localStreamRef.current = localStream;
-
     localStream.getTracks().forEach((track) => {
       peerConnectionRef.current.addTrack(track, localStream);
     });
@@ -144,26 +137,36 @@ const ChatHeader = () => {
     });
 
     setIsVideoCall(true);
-    setCallStatus("calling"); // ⏳ En attente
+    setCallStatus("calling");
   };
 
   const hangUpCall = () => {
     peerConnectionRef.current?.close();
     peerConnectionRef.current = null;
-
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
     localStreamRef.current = null;
     remoteStreamRef.current = null;
-
     setIsAudioCall(false);
     setIsVideoCall(false);
     setCallStatus("idle");
   };
 
+  const formatDate = (isoDate) => {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <div className="p-2.5 border-b border-base-300">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => setShowUserInfos(true)}
+        >
           <div className="avatar">
             <div className="size-10 rounded-full relative">
               <img
@@ -191,6 +194,52 @@ const ChatHeader = () => {
           </button>
         </div>
       </div>
+
+      {showUserInfos && selectedUser && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
+          <div className="bg-base-100 w-[90%] max-w-md p-6 rounded-xl shadow-xl relative">
+            <button
+              onClick={() => setShowUserInfos(false)}
+              className="btn btn-sm btn-circle absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600"
+            >
+              ✕
+            </button>
+            <div className="flex flex-col items-center gap-4 mt-4">
+              <img
+                onClick={() => setShowImageFull(true)}
+                src={selectedUser.profilePic || "/avatar.png"}
+                alt={selectedUser.fullName}
+                className="w-40 h-40 object-cover rounded-full ring-2 ring-primary cursor-pointer"
+              />
+              <div className="text-center space-y-1">
+                <h2 className="text-xl font-bold">{selectedUser.fullName}</h2>
+                <p className="text-sm text-zinc-500">{selectedUser.email}</p>
+                {selectedUser.username && (
+                  <p className="text-sm text-zinc-400">@{selectedUser.username}</p>
+                )}
+                {selectedUser.createdAt && (
+                  <p className="text-sm text-zinc-500 mt-2">
+                    Membre depuis le <strong>{formatDate(selectedUser.createdAt)}</strong>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showImageFull && (
+        <div
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+          onClick={() => setShowImageFull(false)}
+        >
+          <img
+            src={selectedUser.profilePic || "/avatar.png"}
+            alt="Profil"
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      )}
 
       {isAudioCall && (
         <AudioCallModal

@@ -44,7 +44,7 @@ export const useChatStore = create((set, get) => ({
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Erreur lors de la récupération des messages.");
     } finally {
       set({ isMessagesLoading: false });
     }
@@ -58,8 +58,18 @@ export const useChatStore = create((set, get) => ({
         messageData
       );
       set({ messages: [...messages, res.data] });
+
+      // ✅ Met à jour lastMessagesByUser et recentChats après envoi
+      set((state) => ({
+        lastMessagesByUser: {
+          ...state.lastMessagesByUser,
+          [selectedUser._id]: res.data,
+        },
+      }));
+
+      get().addRecentChat(selectedUser._id);
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Erreur lors de l'envoi du message.");
     }
   },
 
@@ -76,29 +86,46 @@ export const useChatStore = create((set, get) => ({
       );
       set({ lastMessagesByUser: lastMessages });
     } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des derniers messages :",
-        error
-      );
+      console.error("Erreur lors de la récupération des derniers messages :", error);
     }
   },
 
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const { addRecentChat, messages, selectedUser } = get();
+      const {
+        addRecentChat,
+        messages,
+        selectedUser,
+        lastMessagesByUser,
+        users,
+      } = get();
+
       const isMessageSentFromSelectedUser =
         newMessage.senderId === selectedUser?._id;
 
+      // ✅ Ajoute au fil si on est dans la bonne conversation
       if (isMessageSentFromSelectedUser) {
         set({ messages: [...messages, newMessage] });
       }
 
+      // ✅ Ajouter à la liste des récents
       addRecentChat(newMessage.senderId);
+
+      // ✅ Mettre à jour le dernier message reçu
+      set({
+        lastMessagesByUser: {
+          ...lastMessagesByUser,
+          [newMessage.senderId]: newMessage,
+        },
+      });
+
+      // ✅ Optionnel : Ajouter l'utilisateur à users[] si inconnu
+      const userExists = users.find((u) => u._id === newMessage.senderId);
+      if (!userExists) {
+        get().getUsers(); // Rafraîchir la liste des utilisateurs
+      }
     });
   },
 
@@ -111,8 +138,8 @@ export const useChatStore = create((set, get) => ({
     set({ selectedUser });
 
     const { lastMessagesByUser } = get();
-
     const lastMessage = lastMessagesByUser[selectedUser._id];
+
     if (lastMessage && !lastMessage.seen) {
       const updatedLastMessages = {
         ...lastMessagesByUser,
@@ -124,14 +151,9 @@ export const useChatStore = create((set, get) => ({
       set({ lastMessagesByUser: updatedLastMessages });
 
       try {
-        await axiosInstance.patch(
-          `/messages/mark-as-seen/${selectedUser._id}`
-        );
+        await axiosInstance.patch(`/messages/mark-as-seen/${selectedUser._id}`);
       } catch (err) {
-        console.error(
-          "Erreur lors du marquage du message comme vu :",
-          err.message
-        );
+        console.error("Erreur lors du marquage du message comme vu :", err.message);
       }
     }
   },

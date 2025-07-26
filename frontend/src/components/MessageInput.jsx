@@ -8,7 +8,6 @@ const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const [mediaRecorder, setMediaRecorder] = useState(null);
@@ -17,10 +16,8 @@ const MessageInput = () => {
 
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
-
   const { sendMessage } = useChatStore();
 
-  // Gestion image
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file?.type.startsWith("image/")) {
@@ -39,12 +36,10 @@ const MessageInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Gestion emoji
   const handleEmojiClick = (e) => {
     setText((prev) => prev + e.emoji);
   };
 
-  // Gestion audio
   const handleStartRecording = async () => {
     if (isRecording) {
       mediaRecorder.stop();
@@ -61,13 +56,10 @@ const MessageInput = () => {
       setIsRecording(true);
 
       let chunks = [];
-      mr.ondataavailable = (e) => {
-        chunks.push(e.data);
-      };
+      mr.ondataavailable = (e) => chunks.push(e.data);
       mr.onstop = () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
         setAudioBlob(blob);
-        chunks = [];
         stream.getTracks().forEach((t) => t.stop());
       };
 
@@ -177,6 +169,7 @@ const MessageInput = () => {
         </div>
       )}
 
+      {/* Input form */}
       <form onSubmit={handleSendMessage} className="flex items-center gap-2">
         {/* Emoji button */}
         <button
@@ -185,15 +178,15 @@ const MessageInput = () => {
           className="btn btn-circle btn-xs text-yellow-500"
           title="Emoji picker"
         >
-          <Smile size={18} />
+          <Smile size={18} className="sm:size-20" />
         </button>
 
-        {/* Input + icons */}
-        <div className="flex-1 flex items-center gap-2">
+        {/* Input + media actions */}
+        <div className="flex-1 flex items-center gap-1 sm:gap-2">
           <input
             type="text"
-            className="w-full input input-bordered rounded-lg input-xs p-y-5 sm:input-sm"
-            placeholder="Type a message..."
+            className="input input-bordered input-sm sm:input-md w-full text-sm"
+            placeholder="Écrire un message..."
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={isRecording || !!audioBlob}
@@ -208,36 +201,36 @@ const MessageInput = () => {
             disabled={isRecording || !!audioBlob}
           />
 
-          {/* Image button visible only on mobile */}
+          {/* Image mobile button */}
           <button
             type="button"
-            className={`sm:hidden btn btn-circle btn-xs ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            className="sm:hidden btn btn-circle btn-xs text-zinc-400"
             onClick={() => fileInputRef.current?.click()}
             disabled={isRecording || !!audioBlob}
-            title="Add image"
+            title="Ajouter une image"
           >
-            <Image size={18} />
+            <Image size={16} className="sm:size-20" />
           </button>
 
-          {/* Audio record button */}
+          {/* Audio recording */}
           <button
             type="button"
             onClick={handleStartRecording}
-            className={`btn btn-circle btn-xs ${isRecording ? "btn-error" : "btn-ghost"} text-white-500`}
-            title={isRecording ? `Arrêter Enregistrement (${recordTime}s)` : "Démarrer enregistrement"}
+            className={`btn btn-circle btn-xs ${isRecording ? "btn-error" : "btn-ghost"}`}
+            title={isRecording ? `Arrêter (${recordTime}s)` : "Enregistrer un audio"}
           >
-            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+            {isRecording ? <MicOff size={16} className="sm:size-20" /> : <Mic size={16} className="sm:size-20" />}
           </button>
         </div>
 
-        {/* Send button */}
+        {/* Send message */}
         <button
           type="submit"
           className="btn btn-xs btn-circle"
           disabled={!text.trim() && !imagePreview && !audioBlob}
-          title="Send message"
+          title="Envoyer"
         >
-          <Send size={20} />
+          <Send size={18} className="sm:size-20" />
         </button>
       </form>
     </div>
