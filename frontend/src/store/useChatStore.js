@@ -125,7 +125,7 @@ export const useChatStore = create((set, get) => ({
         await axiosInstance.patch(
           `/messages/mark-as-seen/${selectedUser._id}`
         );
-        toast.success("message marque comme vu");
+        //toast.success("message marque comme vu");
       } catch (err) {
         console.error(
           "Erreur lors du marquage du message comme vu :",
