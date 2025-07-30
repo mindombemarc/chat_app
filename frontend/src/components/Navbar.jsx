@@ -40,8 +40,8 @@ const Navbar = () => {
 
             {/* ✅ SEARCH INPUT MOBILE */}
             <div className="flex-1 mx-3 sm:hidden">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 size-4 text-zinc-500" />
+              <div className="relative hidden">
+                <Search className="absolute hidden left-2 top-2.5 size-4 text-zinc-500" />
                 <input
                   type="text"
                   placeholder="Rechercher..."
@@ -52,7 +52,9 @@ const Navbar = () => {
                 {searchTerm && (
                   <div className="absolute top-full left-0 right-0 z-50 bg-base-100 shadow-md rounded-md mt-1 max-h-60 overflow-y-auto">
                     {searchResults.map((user) => (
-                      <button
+                      
+                      <>
+                        <button
                         key={user._id}
                         onClick={() => {
                           setSelectedUser(user);
@@ -62,6 +64,12 @@ const Navbar = () => {
                       >
                         {user.fullName}
                       </button>
+                       <img
+                src={user.profilePic}
+                alt=""
+                className="size-9 rounded-full object-cover cursor-pointer hover:ring-2 ring-primary transition hidden sm:block"
+              />
+                      </>
                     ))}
                     {searchResults.length === 0 && (
                       <div className="px-4 py-2 text-sm text-zinc-500">

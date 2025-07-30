@@ -12,55 +12,81 @@ const Sidebar = () => {
     setSelectedUser,
     isUsersLoading,
     lastMessagesByUser,
+    recentChats,
   } = useChatStore();
 
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     getUsers();
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [getUsers]);
 
-  const usersWithMessages = users.filter((user) => lastMessagesByUser[user._id]);
+  const filteredUsers = (showOnlineOnly
+    ? users.filter((user) => onlineUsers.includes(user._id))
+    : users
+  )
+    .filter((user) =>
+      user.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const indexA = recentChats.indexOf(a._id);
+      const indexB = recentChats.indexOf(b._id);
 
-  const sortedUsers = (showOnlineOnly
-    ? usersWithMessages.filter((user) => onlineUsers.includes(user._id))
-    : usersWithMessages
-  ).sort((a, b) => {
-    const dateA = new Date(lastMessagesByUser[a._id]?.updatedAt || lastMessagesByUser[a._id]?.createdAt || 0);
-    const dateB = new Date(lastMessagesByUser[b._id]?.updatedAt || lastMessagesByUser[b._id]?.createdAt || 0);
-    return dateB - dateA;
-  });
-
-  const searchResults = searchTerm
-    ? users.filter((user) =>
-        user.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
 
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-24 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
-      {/* Header */}
-      <div className="border-b border-base-300 w-full p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Users className="size-6" />
-          <span className="font-medium hidden lg:block">Contacts</span>
+    <aside
+      className={`h-full flex flex-col transition-all duration-200 ${
+        isMobile ? "w-full bg-base-100" : "w-20 lg:w-72 border-r border-base-300"
+      }`}
+    >
+      {/* ✅ Bouton retour (mobile seulement) */}
+      {isMobile && selectedUser && (
+        <button
+          onClick={() => setSelectedUser(null)}
+          className="p-3 text-sm bg-base-300 text-left flex items-center gap-2"
+        >
+          ⬅️ Retour aux contacts
+        </button>
+      )}
+
+      <div className="sm:border-b-none border-b border-base-300 w-full p-5">
+        {/* ✅ Ligne titre + recherche (mobile) */}
+        <div className="flex justify-between items-center lg:block">
+          <div className="flex items-center gap-2">
+            <Users className="size-6" />
+            <span className="font-medium lg:block">Contacts</span>
+          </div>
+
+          {/* 🔍 Barre de recherche mobile seulement */}
+          {isMobile && (
+            <input
+              type="text"
+              placeholder="Rechercher"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input input-sm input-bordered max-w-[140px] lg:hidden"
+            />
+          )}
         </div>
 
-        {/* ✅ Barre de recherche élargie */}
-        <input
-          type="text"
-          placeholder=" Rechercher..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="input input-sm w-full text-sm input-bordered px-4 py-2"
-          autoComplete="off"
-        />
-
-        {/* ✅ Filtre des utilisateurs en ligne */}
+        {/* ✅ Options uniquement sur desktop */}
         <div className="mt-3 hidden lg:flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
             <input
@@ -77,90 +103,55 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* ✅ Liste des utilisateurs avec messages */}
       <div className="overflow-y-auto w-full py-3">
-        {searchTerm === "" && sortedUsers.map((user) => {
+        {filteredUsers.map((user) => {
           const isOnline = onlineUsers.includes(user._id);
           const isSeen = lastMessagesByUser[user._id]?.seen;
 
           return (
-            <UserItem
+            <button
               key={user._id}
-              user={user}
-              isSelected={selectedUser?._id === user._id}
-              isOnline={isOnline}
-              isSeen={isSeen}
               onClick={() => setSelectedUser(user)}
-            />
+              className={`w-full p-3 flex items-center gap-3 hover:bg-base-300 transition-colors ${
+                selectedUser?._id === user._id
+                  ? "bg-base-300 ring-1 ring-base-300"
+                  : ""
+              }`}
+            >
+              <div className="relative mx-auto lg:mx-0">
+                <img
+                  src={user.profilePic || "/avatar.png"}
+                  alt={user.name}
+                  className="size-12 object-cover rounded-full"
+                />
+                {isOnline && (
+                  <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
+                )}
+              </div>
+
+              <div className="lg:flex flex-col text-left min-w-0 flex-1">
+                <div className="font-medium truncate">{user.fullName}</div>
+                <div className="text-sm text-zinc-400 flex items-center gap-2">
+                  <span>{isOnline ? "En ligne" : "Déconnecté"}</span>
+                  {isSeen ? (
+                    <CheckCheck className="size-4 text-blue-500" />
+                  ) : (
+                    <Check className="size-4 text-gray-400" />
+                  )}
+                </div>
+              </div>
+            </button>
           );
         })}
 
-        {searchTerm && (
-          <>
-            <div className="px-4 pb-1 pt-2 text-xs font-semibold text-zinc-400">
-              Résultats de recherche
-            </div>
-            {searchResults.map((user) => (
-              <UserItem
-                key={user._id}
-                user={user}
-                isSelected={selectedUser?._id === user._id}
-                isOnline={onlineUsers.includes(user._id)}
-                isSeen={lastMessagesByUser[user._id]?.seen}
-                onClick={() => {
-                  setSelectedUser(user);
-                  setSearchTerm("");
-                }}
-              />
-            ))}
-            {searchResults.length === 0 && (
-              <div className="text-sm px-4 py-2 text-zinc-500">Aucun utilisateur trouvé</div>
-            )}
-          </>
-        )}
-
-        {!searchTerm && sortedUsers.length === 0 && (
+        {filteredUsers.length === 0 && (
           <div className="text-center text-zinc-500 py-4">
-            Aucun contact trouvé
+            Aucun utilisateur trouvé
           </div>
         )}
       </div>
     </aside>
   );
 };
-
-const UserItem = ({ user, isSelected, isOnline, isSeen, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`
-      w-full p-3 flex items-center gap-3
-      hover:bg-base-300 transition-colors
-      ${isSelected ? "bg-base-300 ring-1 ring-base-300" : ""}
-    `}
-  >
-    <div className="relative mx-auto lg:mx-0">
-      <img
-        src={user.profilePic || "/avatar.png"}
-        alt={user.name}
-        className="size-12 object-cover rounded-full"
-      />
-      {isOnline && (
-        <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
-      )}
-    </div>
-
-    <div className="hidden lg:flex flex-col text-left min-w-0 flex-1">
-      <div className="font-medium truncate">{user.fullName}</div>
-      <div className="text-sm text-zinc-400 flex items-center gap-2">
-        <span>{isOnline ? "En ligne" : "Déconnecté"}</span>
-        {isSeen ? (
-          <CheckCheck className="size-4 text-blue-500" />
-        ) : (
-          <Check className="size-4 text-gray-400" />
-        )}
-      </div>
-    </div>
-  </button>
-);
 
 export default Sidebar;

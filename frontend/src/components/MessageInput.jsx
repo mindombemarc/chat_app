@@ -21,7 +21,7 @@ const MessageInput = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file?.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      toast.error("Veuillez sélectionner une image valide");
       return;
     }
     const reader = new FileReader();
@@ -42,40 +42,49 @@ const MessageInput = () => {
 
   const handleStartRecording = async () => {
     if (isRecording) {
-      mediaRecorder.stop();
+      mediaRecorder?.stop();
       setIsRecording(false);
       clearInterval(recordInterval.current);
       setRecordTime(0);
       return;
     }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
       setMediaRecorder(mr);
-      mr.start();
-      setIsRecording(true);
-
       let chunks = [];
+
       mr.ondataavailable = (e) => chunks.push(e.data);
       mr.onstop = () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
         setAudioBlob(blob);
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
+
+      mr.start();
+      setIsRecording(true);
 
       let seconds = 0;
       recordInterval.current = setInterval(() => {
         seconds++;
         setRecordTime(seconds);
       }, 1000);
-    } catch (error) {
-      toast.error("Microphone access denied or not available");
-      setIsRecording(false);
+    } catch (err) {
+      toast.error("Accès au micro refusé ou indisponible");
     }
   };
 
   const removeAudio = () => {
     setAudioBlob(null);
+  };
+
+  const blobToDataURL = (blob) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
   };
 
   const handleSendMessage = async (e) => {
@@ -99,17 +108,10 @@ const MessageInput = () => {
       setAudioBlob(null);
       setShowEmojiPicker(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (error) {
-      console.error("Failed to send message:", error);
+    } catch (err) {
+      toast.error("Erreur lors de l’envoi du message");
+      console.error(err);
     }
-  };
-
-  const blobToDataURL = (blob) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
   };
 
   useEffect(() => {
@@ -118,8 +120,12 @@ const MessageInput = () => {
         setShowEmojiPicker(false);
       }
     };
-    if (showEmojiPicker) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [showEmojiPicker]);
 
   return (
@@ -152,7 +158,7 @@ const MessageInput = () => {
             onClick={removeAudio}
             className="btn btn-sm btn-error ml-2"
             type="button"
-            title="Remove audio"
+            title="Supprimer l'audio"
           >
             <X size={16} />
           </button>
@@ -165,23 +171,28 @@ const MessageInput = () => {
           ref={emojiPickerRef}
           className="absolute z-50 bottom-20 left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 w-[50vw] sm:w-96 bg-base-200 rounded-lg shadow-lg"
         >
-          <EmojiPicker onEmojiClick={handleEmojiClick} theme="dark" width="100%" height="420px" />
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            theme="dark"
+            width="100%"
+            height="420px"
+          />
         </div>
       )}
 
-      {/* Input form */}
+      {/* Formulaire */}
       <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-        {/* Emoji button */}
+        {/* Emoji */}
         <button
           type="button"
           onClick={() => setShowEmojiPicker((prev) => !prev)}
           className="btn btn-circle btn-xs text-yellow-500"
-          title="Emoji picker"
+          title="Emoji"
         >
-          <Smile size={18} className="sm:size-20" />
+          <Smile size={18} />
         </button>
 
-        {/* Input + media actions */}
+        {/* Input + media */}
         <div className="flex-1 flex items-center gap-1 sm:gap-2">
           <input
             type="text"
@@ -201,36 +212,36 @@ const MessageInput = () => {
             disabled={isRecording || !!audioBlob}
           />
 
-          {/* Image mobile button */}
+          {/* Bouton image mobile */}
           <button
             type="button"
             className="sm:hidden btn btn-circle btn-xs text-zinc-400"
             onClick={() => fileInputRef.current?.click()}
             disabled={isRecording || !!audioBlob}
-            title="Ajouter une image"
+            title="Image"
           >
-            <Image size={16} className="sm:size-20" />
+            <Image size={16} />
           </button>
 
-          {/* Audio recording */}
+          {/* Audio */}
           <button
             type="button"
             onClick={handleStartRecording}
             className={`btn btn-circle btn-xs ${isRecording ? "btn-error" : "btn-ghost"}`}
-            title={isRecording ? `Arrêter (${recordTime}s)` : "Enregistrer un audio"}
+            title={isRecording ? `Arrêter (${recordTime}s)` : "Audio"}
           >
-            {isRecording ? <MicOff size={16} className="sm:size-20" /> : <Mic size={16} className="sm:size-20" />}
+            {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
           </button>
         </div>
 
-        {/* Send message */}
+        {/* Envoyer */}
         <button
           type="submit"
           className="btn btn-xs btn-circle"
           disabled={!text.trim() && !imagePreview && !audioBlob}
           title="Envoyer"
         >
-          <Send size={18} className="sm:size-20" />
+          <Send size={18} />
         </button>
       </form>
     </div>

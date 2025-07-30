@@ -6,8 +6,8 @@ import { useEffect, useRef } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
-import AudioCallModal from "./AudioCallModal"; // 👈 importe ta modal
-import VideoCallModal from "./VideoCallModal"; // si tu as aussi la vidéo
+import AudioCallModal from "./AudioCallModal";
+import VideoCallModal from "./VideoCallModal";
 
 import { formatMessageTime } from "../lib/utils";
 
@@ -19,8 +19,6 @@ const ChatContainer = () => {
     selectedUser,
     subscribeToMessages,
     unsubscribeFromMessages,
-
-    // 👇 Ajout pour gérer les appels
     incomingCall,
     clearIncomingCall,
     subscribeToCalls,
@@ -33,7 +31,7 @@ const ChatContainer = () => {
   useEffect(() => {
     getMessages(selectedUser._id);
     subscribeToMessages();
-    subscribeToCalls(); // ✅ souscrit aussi aux appels
+    subscribeToCalls();
 
     return () => {
       unsubscribeFromMessages();
@@ -56,7 +54,7 @@ const ChatContainer = () => {
 
   if (isMessagesLoading) {
     return (
-      <div className="flex-1 flex flex-col overflow-auto">
+      <div className="flex-1 flex flex-col h-full">
         <ChatHeader />
         <MessageSkeleton />
         <MessageInput />
@@ -65,10 +63,10 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-auto">
+    <div className="flex-1 flex flex-col h-full max-h-screen">
       <ChatHeader />
 
-      {/* ✅ Affiche la modal d'appel si incomingCall existe */}
+      {/* ✅ Modal pour appel entrant */}
       {incomingCall && (
         <AudioCallModal
           user={{ fullName: incomingCall.name }}
@@ -77,11 +75,14 @@ const ChatContainer = () => {
         />
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* ✅ Zone scrollable des messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map((message) => (
           <div
             key={message._id}
-            className={`chat ${message.senderId === authUser._id ? "chat-end" : "chat-start"}`}
+            className={`chat ${
+              message.senderId === authUser._id ? "chat-end" : "chat-start"
+            }`}
             ref={messageEndRef}
           >
             <div className="chat-image avatar">

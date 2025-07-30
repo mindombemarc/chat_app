@@ -112,7 +112,7 @@ export const getLastMessage = async (req, res) => {
 export const markMessagesAsSeen = async (req, res) => {
   try {
     const myId = req.user._id;
-    const userId = req.params.userId;
+    const userId = req.params.id;
 
     await Message.updateMany(
       {
