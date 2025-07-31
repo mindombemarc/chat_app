@@ -1,7 +1,7 @@
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
@@ -10,6 +10,7 @@ import AudioCallModal from "./AudioCallModal";
 import VideoCallModal from "./VideoCallModal";
 
 import { formatMessageTime } from "../lib/utils";
+import { X } from "lucide-react";
 
 const ChatContainer = () => {
   const {
@@ -27,6 +28,7 @@ const ChatContainer = () => {
 
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     getMessages(selectedUser._id);
@@ -107,7 +109,8 @@ const ChatContainer = () => {
                 <img
                   src={message.image}
                   alt="Attachment"
-                  className="sm:max-w-[200px] rounded-md mb-2"
+                  className="sm:max-w-[200px] rounded-md mb-2 cursor-pointer hover:opacity-90 transition"
+                  onClick={() => setSelectedImage(message.image)}
                 />
               )}
               {message.audio && (
@@ -122,6 +125,31 @@ const ChatContainer = () => {
           </div>
         ))}
       </div>
+
+      {/* ✅ Modale image en plein écran */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()} // évite la fermeture si clic sur l’image
+          >
+            <img
+              src={selectedImage}
+              alt="Full view"
+              className="rounded-lg max-w-full max-h-full"
+            />
+            <button
+              className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <MessageInput />
     </div>
