@@ -23,6 +23,10 @@ const messageSchema = new mongoose.Schema(
       default: false,
     },
     audio: { type: String },
+    NotificationNewMessage:{
+      type: Boolean,
+      default:false
+    }
   },
   { timestamps: true }
 );

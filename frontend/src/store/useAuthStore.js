@@ -47,7 +47,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
-      toast.success("Logged in successfully");
 
       get().connectSocket();
     } catch (error) {
@@ -61,7 +60,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       await axiosInstance.post("/auth/logout");
       set({ authUser: null });
-      toast.success("Deconnexion reussi");
       get().disconnectSocket();
     } catch (error) {
       toast.error(error.response.data.message);
@@ -73,7 +71,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.put("/auth/update-profile", data);
       set({ authUser: res.data });
-      toast.success("Profile mis ajour avec succes!");
     } catch (error) {
       console.log("errzue en mettant a jour la profile:", error);
       toast.error(error.response.data.message);

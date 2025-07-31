@@ -1,7 +1,8 @@
 import { X, Phone, Video } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
-
+import { useLanguageStore } from "../store/langueStore.js";
+import translations from "../lib/translations.js";
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import AudioCallModal from "./AudioCallModal";
@@ -12,6 +13,10 @@ const socket = io("http://localhost:5001");
 const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { user, onlineUsers } = useAuthStore();
+
+
+const { language } = useLanguageStore();
+  const t = translations[language];
 
   const [callStatus, setCallStatus] = useState("idle");
   const [isAudioCall, setIsAudioCall] = useState(false);
@@ -152,13 +157,17 @@ const ChatHeader = () => {
     setCallStatus("idle");
   };
 
-  const formatDate = (isoDate) => {
+  /*const formatDate = (isoDate) => {
     const date = new Date(isoDate);
     return date.toLocaleDateString("fr-FR", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+  };*/
+   const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString(language === "ln" ? "fr-FR" : language);
   };
 
   return (
@@ -179,20 +188,34 @@ const ChatHeader = () => {
           <div>
             <h3 className="font-medium">{selectedUser?.fullName}</h3>
             <p className="text-sm text-base-content/70">
-              {onlineUsers.includes(selectedUser?._id) ? "En ligne" : "Off"}
-            </p>
+            {onlineUsers.includes(selectedUser?._id)
+              ? t.online
+              : t.offline}
+          </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleAudioCall} title="Appel audio">
-            <Phone />
-          </button>
-          <button onClick={handleVideoCall} title="Appel vidéo">
-            <Video />
-          </button>
-          <button onClick={() => setSelectedUser(null)} title="Fermer">
-            <X />
-          </button>
+           <button
+          onClick={handleAudioCall}
+          className="btn btn-sm btn-outline"
+          title={t.audioCall}
+        >
+          <Phone className="w-5 h-5" />
+        </button>
+        <button
+          onClick={handleVideoCall}
+          className="btn btn-sm btn-outline"
+          title={t.videoCall}
+        >
+          <Video className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => setSelectedUser(null)}
+          className="btn btn-sm btn-ghost"
+          title={t.close}
+        >
+          <X className="w-5 h-5" />
+        </button>
         </div>
       </div>
 
@@ -200,11 +223,12 @@ const ChatHeader = () => {
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
           <div className="bg-base-100 w-[90%] max-w-md p-6 rounded-xl shadow-xl relative">
             <button
-              onClick={() => setShowUserInfos(false)}
-              className="btn btn-sm btn-circle absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600"
-            >
-              ✕
-            </button>
+          onClick={() => setSelectedUser(null)}
+          className="btn btn-sm btn-ghost"
+          title={t.close}
+        >
+          <X className="w-5 h-5" />
+        </button>
             <div className="flex flex-col items-center gap-4 mt-4">
               <img
                 onClick={() => setShowImageFull(true)}
@@ -219,9 +243,9 @@ const ChatHeader = () => {
                   <p className="text-sm text-zinc-400">@{selectedUser.username}</p>
                 )}
                 {selectedUser.createdAt && (
-                  <p className="text-sm text-zinc-500 mt-2">
-                    Membre depuis le <strong>{formatDate(selectedUser.createdAt)}</strong>
-                  </p>
+                   <p className="text-sm text-zinc-500 mt-1">
+            {t.memberSince} <strong>{formatDate(selectedUser?.createdAt)}</strong>
+          </p>
                 )}
               </div>
             </div>

@@ -67,6 +67,7 @@ export const sendMessage = async (req, res) => {
       text,
       image: imageUrl,
       audio: audioUrl,
+      NotificationNewMessage: true,
     });
 
     await newMessage.save();
@@ -129,4 +130,22 @@ export const markMessagesAsSeen = async (req, res) => {
     res.status(500).json({ error: "Erreur du Serveur lors du marquage des messages comme vus" });
   }
 };
+
+export const markNotificationsAsSeen = async (req, res) => {
+  try {
+    const senderId = req.params.id; // celui qui a envoyé
+    const receiverId = req.user._id; // celui qui reçoit et ouvre la conversation
+
+    await Message.updateMany(
+      { senderId, receiverId, NotificationNewMessage: true },
+      { $set: { NotificationNewMessage: false } }
+    );
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Erreur reset Notification:", error.message);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
 

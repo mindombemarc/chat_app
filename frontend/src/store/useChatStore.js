@@ -54,7 +54,9 @@ export const useChatStore = create((set, get) => ({
     const { selectedUser, messages } = get();
     try {
       const res = await axiosInstance.post(
-        `/messages/send/${selectedUser._id}`, messageData);
+        `/messages/send/${selectedUser._id}`,
+        messageData
+      );
       set({ messages: [...messages, res.data] });
     } catch (error) {
       toast.error(error.response.data.message);
@@ -82,19 +84,33 @@ export const useChatStore = create((set, get) => ({
   },
 
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const { addRecentChat, messages, selectedUser } = get();
+      const {
+        addRecentChat,
+        messages,
+        selectedUser,
+        lastMessagesByUser,
+      } = get();
+
       const isMessageSentFromSelectedUser =
         newMessage.senderId === selectedUser?._id;
 
+      // ✅ Ajouter à la conversation ouverte
       if (isMessageSentFromSelectedUser) {
         set({ messages: [...messages, newMessage] });
       }
+
+      // ✅ Mettre à jour notification verte
+      const updatedLastMessages = {
+        ...lastMessagesByUser,
+        [newMessage.senderId]: {
+          ...newMessage,
+          NotificationNewMessage: true,
+        },
+      };
+      set({ lastMessagesByUser: updatedLastMessages });
 
       addRecentChat(newMessage.senderId);
     });
@@ -111,6 +127,8 @@ export const useChatStore = create((set, get) => ({
     const { lastMessagesByUser } = get();
 
     const lastMessage = lastMessagesByUser[selectedUser._id];
+
+    // ✅ Marquer comme vu
     if (lastMessage && !lastMessage.seen) {
       const updatedLastMessages = {
         ...lastMessagesByUser,
@@ -125,12 +143,28 @@ export const useChatStore = create((set, get) => ({
         await axiosInstance.patch(
           `/messages/mark-as-seen/${selectedUser._id}`
         );
-        //toast.success("message marque comme vu");
       } catch (err) {
-        console.error(
-          "Erreur lors du marquage du message comme vu :",
-          err.message
+        console.error("Erreur marquage vu :", err.message);
+      }
+    }
+
+    // ✅ Marquer notification comme vue
+    if (lastMessage?.NotificationNewMessage) {
+      const updatedLastMessages = {
+        ...lastMessagesByUser,
+        [selectedUser._id]: {
+          ...lastMessage,
+          NotificationNewMessage: false,
+        },
+      };
+      set({ lastMessagesByUser: updatedLastMessages });
+
+      try {
+        await axiosInstance.put(
+          `/messages/notifications/${selectedUser._id}`
         );
+      } catch (err) {
+        console.error("Erreur désactivation notification :", err.message);
       }
     }
   },
