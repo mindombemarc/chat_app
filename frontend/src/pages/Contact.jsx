@@ -46,7 +46,7 @@ const Contact = () => {
           <p><strong>Téléphone :</strong> +243 831 634 637</p>
           <p><strong>Email :</strong> marc.mindombe@email.com</p>
           <p><strong>Adresse :</strong> Kinshasa, République Démocratique du Congo</p>
-          <p><strong>LinkedIn :</strong> <a href="https://linkedin.com" target="_blank" className="text-blue-600 underline">Voir le profil</a></p>
+          <p><strong>LinkedIn :</strong> <a href="https://www.linkedin.com/in/marc-mindombe-978b1b27a/" target="_blank" className="text-blue-600 underline">Voir le profil</a></p>
         </div>
 
         {/* Formulaire */}
