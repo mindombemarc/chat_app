@@ -11,8 +11,6 @@ export const useChatStore = create((set, get) => ({
   isMessagesLoading: false,
   lastMessagesByUser: {}, // userId -> lastMessage
   recentChats: [],
-
-  // ✅ Pour l'appel entrant
   incomingCall: null,
 
   addRecentChat: (userId) => {
@@ -26,7 +24,6 @@ export const useChatStore = create((set, get) => ({
     try {
       const res = await axiosInstance.get("/messages/users");
       set({ users: res.data });
-
       await get().fetchLastMessages();
     } catch (error) {
       toast.error(
@@ -44,22 +41,26 @@ export const useChatStore = create((set, get) => ({
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Erreur lors du chargement des messages.");
     } finally {
       set({ isMessagesLoading: false });
     }
   },
 
-  sendMessage: async (messageData) => {
+  sendMessage: async (formData) => {
     const { selectedUser, messages } = get();
     try {
+      const config = formData instanceof FormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : {};
       const res = await axiosInstance.post(
         `/messages/send/${selectedUser._id}`,
-        messageData
+        formData,
+        config
       );
       set({ messages: [...messages, res.data] });
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Erreur lors de l'envoi du message");
     }
   },
 
@@ -97,12 +98,12 @@ export const useChatStore = create((set, get) => ({
       const isMessageSentFromSelectedUser =
         newMessage.senderId === selectedUser?._id;
 
-      // ✅ Ajouter à la conversation ouverte
+      // Ajouter à la conversation ouverte si concernée
       if (isMessageSentFromSelectedUser) {
         set({ messages: [...messages, newMessage] });
       }
 
-      // ✅ Mettre à jour notification verte
+      // Mettre à jour la notification et dernier message
       const updatedLastMessages = {
         ...lastMessagesByUser,
         [newMessage.senderId]: {
@@ -125,10 +126,9 @@ export const useChatStore = create((set, get) => ({
     set({ selectedUser });
 
     const { lastMessagesByUser } = get();
-
     const lastMessage = lastMessagesByUser[selectedUser._id];
 
-    // ✅ Marquer comme vu
+    // Marquer messages comme vus
     if (lastMessage && !lastMessage.seen) {
       const updatedLastMessages = {
         ...lastMessagesByUser,
@@ -148,7 +148,7 @@ export const useChatStore = create((set, get) => ({
       }
     }
 
-    // ✅ Marquer notification comme vue
+    // Désactiver notification de nouveau message
     if (lastMessage?.NotificationNewMessage) {
       const updatedLastMessages = {
         ...lastMessagesByUser,
@@ -169,7 +169,6 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  // ✅ Abonnement aux événements d'appel
   subscribeToCalls: () => {
     const socket = useAuthStore.getState().socket;
 
@@ -186,7 +185,7 @@ export const useChatStore = create((set, get) => ({
 
     socket.on("callAccepted", (signal) => {
       console.log("✅ Appel accepté :", signal);
-      // Gère ton signal WebRTC ici
+      // Gérer signal WebRTC ici si besoin
     });
   },
 

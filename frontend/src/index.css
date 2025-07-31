@@ -10,3 +10,28 @@
   -ms-overflow-style: none;  /* IE et Edge */
   scrollbar-width: none;     /* Firefox */
 }
+/* Supprime l'apparence native du lecteur audio pour certains navigateurs */
+audio::-webkit-media-controls-panel {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-volume-slider {
+  filter: invert(1); /* pour bouton blanc sur bg bleu */
+}
+
+/* Optionnel : style custom sur Firefox */
+audio {
+  background: transparent;
+}
+
+/* Ajuste la barre audio et les contrôles */
+.audio-message audio {
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+  border-radius: 0.375rem;
+}
+

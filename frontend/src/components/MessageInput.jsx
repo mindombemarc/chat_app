@@ -1,249 +1,162 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useRef } from "react";
+import { ImageIcon, Send, X, Mic, StopCircle } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, Smile, X, Mic, MicOff } from "lucide-react";
-import toast from "react-hot-toast";
-import EmojiPicker from "emoji-picker-react";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
-  const [imagePreview, setImagePreview] = useState(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState(null);
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [recordTime, setRecordTime] = useState(0);
-  const recordInterval = useRef(null);
 
-  const fileInputRef = useRef(null);
-  const emojiPickerRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const inputRef = useRef(null);
+
   const { sendMessage } = useChatStore();
 
-  const handleImageChange = (e) => {
+  // Gérer image/vidéo
+  const handleMediaChange = (e) => {
     const file = e.target.files[0];
-    if (!file?.type.startsWith("image/")) {
-      toast.error("Veuillez sélectionner une image valide");
+    if (!file) return;
+
+    const maxSizeMB = 20;
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB > maxSizeMB) {
+      alert(`Le fichier dépasse ${maxSizeMB} Mo.`);
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+
+    if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
+      setMediaPreview(URL.createObjectURL(file));
+      setMediaFile(file);
+    }
   };
 
-  const removeImage = () => {
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleEmojiClick = (e) => {
-    setText((prev) => prev + e.emoji);
-  };
-
-  const handleStartRecording = async () => {
+  // Enregistrement audio
+  const handleAudioRecord = () => {
     if (isRecording) {
-      mediaRecorder?.stop();
+      mediaRecorderRef.current.stop();
       setIsRecording(false);
-      clearInterval(recordInterval.current);
-      setRecordTime(0);
-      return;
-    }
+    } else {
+      audioChunksRef.current = [];
+      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      setMediaRecorder(mr);
-      let chunks = [];
+        mediaRecorder.start();
+        setIsRecording(true);
 
-      mr.ondataavailable = (e) => chunks.push(e.data);
-      mr.onstop = () => {
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        setAudioBlob(blob);
-        stream.getTracks().forEach((track) => track.stop());
-      };
+        mediaRecorder.ondataavailable = (e) => {
+          audioChunksRef.current.push(e.data);
+        };
 
-      mr.start();
-      setIsRecording(true);
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          const audioFile = new File([audioBlob], "audio-message.webm", {
+            type: "audio/webm",
+          });
 
-      let seconds = 0;
-      recordInterval.current = setInterval(() => {
-        seconds++;
-        setRecordTime(seconds);
-      }, 1000);
-    } catch (err) {
-      toast.error("Accès au micro refusé ou indisponible");
-    }
-  };
-
-  const removeAudio = () => {
-    setAudioBlob(null);
-  };
-
-  const blobToDataURL = (blob) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!text.trim() && !imagePreview && !audioBlob) return;
-
-    try {
-      let audioDataUrl = null;
-      if (audioBlob) {
-        audioDataUrl = await blobToDataURL(audioBlob);
-      }
-
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-        audio: audioDataUrl,
+          setMediaPreview(URL.createObjectURL(audioBlob));
+          setMediaFile(audioFile);
+          stream.getTracks().forEach((track) => track.stop());
+        };
+      }).catch(() => {
+        alert("Impossible d'accéder au microphone.");
       });
-
-      setText("");
-      setImagePreview(null);
-      setAudioBlob(null);
-      setShowEmojiPicker(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (err) {
-      toast.error("Erreur lors de l’envoi du message");
-      console.error(err);
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
-        setShowEmojiPicker(false);
-      }
-    };
-    if (showEmojiPicker) {
-      document.addEventListener("mousedown", handleClickOutside);
+  const handleSend = async () => {
+    if (!text && !mediaFile) return;
+
+    const formData = new FormData();
+    formData.append("text", text);
+    if (mediaFile) {
+      formData.append("media", mediaFile);
     }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showEmojiPicker]);
+
+    await sendMessage(formData);
+
+    setText("");
+    setMediaFile(null);
+    setMediaPreview(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
   return (
-    <div className="p-4 w-full relative bg-base-100">
-      {/* Preview image */}
-      {imagePreview && (
-        <div className="mb-3 flex items-center gap-2">
-          <div className="relative">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-20 h-20 object-cover rounded-lg border border-zinc-700"
-            />
-            <button
-              onClick={removeImage}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300 flex items-center justify-center"
-              type="button"
-            >
-              <X className="size-3" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Preview audio */}
-      {audioBlob && (
-        <div className="mb-3 flex items-center gap-2">
-          <audio controls src={URL.createObjectURL(audioBlob)} className="w-40" />
+    <div className="p-2 border-t bg-white w-full">
+      {/* Preview image / vidéo / audio */}
+      {mediaPreview && (
+        <div className="relative mb-2 w-fit max-w-[200px]">
           <button
-            onClick={removeAudio}
-            className="btn btn-sm btn-error ml-2"
-            type="button"
-            title="Supprimer l'audio"
+            className="absolute -top-2 -right-2 bg-white text-black rounded-full p-1 shadow"
+            onClick={() => {
+              setMediaFile(null);
+              setMediaPreview(null);
+            }}
           >
             <X size={16} />
           </button>
+
+          {mediaFile?.type.startsWith("image/") && (
+            <img
+              src={mediaPreview}
+              alt="preview"
+              className="rounded max-w-full max-h-[200px]"
+            />
+          )}
+
+          {mediaFile?.type.startsWith("video/") && (
+            <video
+              controls
+              src={mediaPreview}
+              className="rounded max-w-full max-h-[200px]"
+            />
+          )}
+
+          {mediaFile?.type.startsWith("audio/") && (
+            <audio controls src={mediaPreview} className="rounded max-w-full" />
+          )}
         </div>
       )}
 
-      {/* Emoji picker */}
-      {showEmojiPicker && (
-        <div
-          ref={emojiPickerRef}
-          className="absolute z-50 bottom-20 left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 w-[50vw] sm:w-96 bg-base-200 rounded-lg shadow-lg"
-        >
-          <EmojiPicker
-            onEmojiClick={handleEmojiClick}
-            theme="dark"
-            width="100%"
-            height="420px"
-          />
-        </div>
-      )}
-
-      {/* Formulaire */}
-      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-        {/* Emoji */}
+      {/* Barre de saisie + icônes */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* 🎤 Micro */}
         <button
-          type="button"
-          onClick={() => setShowEmojiPicker((prev) => !prev)}
-          className="btn btn-circle btn-xs text-yellow-500"
-          title="Emoji"
+          onClick={handleAudioRecord}
+          className={`text-blue-500 ${isRecording ? "text-red-500 animate-pulse" : ""}`}
+          title={isRecording ? "Arrêter l'enregistrement" : "Enregistrer un message audio"}
         >
-          <Smile size={18} />
+          {isRecording ? <StopCircle /> : <Mic />}
         </button>
 
-        {/* Input + media */}
-        <div className="flex-1 flex items-center gap-1 sm:gap-2">
-          <input
-            type="text"
-            className="input input-bordered input-sm sm:input-md w-full text-sm"
-            placeholder="Écrire un message..."
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            disabled={isRecording || !!audioBlob}
-          />
+        {/* Champ de texte */}
+        <input
+          type="text"
+          placeholder="Écrire un message..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="flex-1 border rounded-full px-4 py-2 focus:outline-none min-w-[120px]"
+        />
 
+        {/* 📎 Image/Vidéo */}
+        <label className="cursor-pointer">
+          <ImageIcon />
           <input
             type="file"
-            accept="image/*"
+            ref={inputRef}
+            accept="image/*,video/*"
             className="hidden"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-            disabled={isRecording || !!audioBlob}
+            onChange={handleMediaChange}
           />
+        </label>
 
-          {/* Bouton image mobile */}
-          <button
-            type="button"
-            className="sm:hidden btn btn-circle btn-xs text-zinc-400"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isRecording || !!audioBlob}
-            title="Image"
-          >
-            <Image size={16} />
-          </button>
-
-          {/* Audio */}
-          <button
-            type="button"
-            onClick={handleStartRecording}
-            className={`btn btn-circle btn-xs ${isRecording ? "btn-error" : "btn-ghost"}`}
-            title={isRecording ? `Arrêter (${recordTime}s)` : "Audio"}
-          >
-            {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
-          </button>
-        </div>
-
-        {/* Envoyer */}
-        <button
-          type="submit"
-          className="btn btn-xs btn-circle"
-          disabled={!text.trim() && !imagePreview && !audioBlob}
-          title="Envoyer"
-        >
-          <Send size={18} />
+        {/* 📤 Envoyer */}
+        <button onClick={handleSend} className="text-blue-500">
+          <Send />
         </button>
-      </form>
+      </div>
     </div>
   );
 };

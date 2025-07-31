@@ -15,22 +15,21 @@ const messageSchema = new mongoose.Schema(
     text: {
       type: String,
     },
-    image: {
-      type: String,
+    media: {
+      url: { type: String },
+      type: { type: String }, // ex: "image/jpeg", "video/mp4", "audio/mpeg"
     },
     seen: {
       type: Boolean,
       default: false,
     },
-    audio: { type: String },
-    NotificationNewMessage:{
+    NotificationNewMessage: {
       type: Boolean,
-      default:false
-    }
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
 const Message = mongoose.model("Message", messageSchema);
-
 export default Message;

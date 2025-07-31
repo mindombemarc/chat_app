@@ -48,6 +48,17 @@ const SettingsPage = () => {
         >
           Changer langue
         </button>
+         <button
+          type="button"
+          className={`py-2 px-4 font-medium ${
+            activeTab === "contact"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-600 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("contact")}
+        >
+          contact
+        </button>
         <button
           type="button"
           className={`py-2 px-4 font-medium ${
@@ -71,17 +82,7 @@ const SettingsPage = () => {
           Autres
         </button>
 
-         <button
-          type="button"
-          className={`py-2 px-4 font-medium ${
-            activeTab === "contact"
-              ? "border-b-2 border-blue-600 text-blue-600"
-              : "text-gray-600 hover:text-blue-600"
-          }`}
-          onClick={() => setActiveTab("contact")}
-        >
-          contact
-        </button>
+        
       </nav>
 
       {/* Contenu onglets */}
