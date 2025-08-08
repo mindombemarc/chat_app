@@ -19,7 +19,7 @@ export const WelcomeTemplateEmail = (activation_link, userName) => {
           </tr>
           <tr>
             <td align="center" style="padding:30px;">
-              <img src="https://res-console.cloudinary.com/di68u9gkm/thumbnails/v1/image/upload/v1750487788/dXg0am9rOHhjdG83d3IxaXl0OXg=/drilldown" alt="Bienvenue" width="100%" style="display:block;margin:0 auto;" />
+              <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="Bienvenue" width="100%" style="display:block;margin:0 auto;" />
             </td>
           </tr>
           <tr>
