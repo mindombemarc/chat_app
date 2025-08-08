@@ -1,27 +1,31 @@
-import { MailerSend, Recipient, EmailParams } from 'mailersend';
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import { WelcomeTemplateEmail } from "../lib/EmailTemplate.js"; // Correction du nom
 
-export async function mailerSendWithEmail(email, verificationToken) {
-  const mailersend = new MailerSend({
-    apiKey: 'mlsn.76958853ec7980f2ae5645383458b06f78e2690004f7206f12392bf3d10d8df5',
-  });
+dotenv.config();
 
-  const recipients = [new Recipient(email, 'Marc Admin')];
-
-  const emailParams = new EmailParams({
-    from: {
-      email: 'test-xkjn41m73xq4z781.mlsender.net', // Vérifie que ce domaine/email est validé
-      name: 'Marc Mindombe',
+export async function sendEmail(to, activeLink, fullName) {
+  const transporter = nodemailer.createTransport({
+    service: process.env.SERVICE_NODEMAILER, // Exemple : "gmail"
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GOOGLE_PASSWORD, // Mot de passe d'application Gmail
     },
-    to: recipients,
-    subject: 'Mon premier email',
-    html: `code de verification: <b>${verificationToken}</b>`,
-    text: `code de verification: ${verificationToken}`,
   });
 
   try {
-    const response = await mailersend.email.send(emailParams);
-    console.log('✅ Email envoyé !', response);
+    const mailOptions = {
+      from: `"Mon Application" <${process.env.GMAIL_USER}>`,
+      to,
+      subject: "Bienvenue sur notre plateforme 🎉",
+      html: WelcomeTemplateEmail(activeLink, fullName),
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email envoyé avec succès ! ID:", info.messageId);
+    return info;
   } catch (error) {
-    console.error('❌ Erreur lors de l’envoi :', error);
+    console.error("❌ Échec de l'envoi d'email:", error.message);
+    throw error;
   }
 }

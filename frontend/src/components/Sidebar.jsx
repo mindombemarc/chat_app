@@ -7,14 +7,8 @@ import { useNavigate } from "react-router-dom";
 import ShowUserInfos from "./ShowUserInfos";
 
 const Sidebar = () => {
-  const {
-    getUsers,
-    users,
-    selectedUser,
-    setSelectedUser,
-    isUsersLoading,
-    lastMessagesByUser,
-    recentChats,
+  const { getUsers,users, selectedUser, setSelectedUser,isUsersLoading, lastMessagesByUser,
+     recentChats,
     addRecentChat,
   } = useChatStore();
 

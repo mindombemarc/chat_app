@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare, User } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+  MessageSquare,
+  User,
+  Phone,          // import icône téléphone
+  CheckCircle,    // import icône vérification
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 import AuthImagePattern from "../components/AuthImagePattern";
@@ -12,17 +22,19 @@ const SignUpPage = () => {
     fullName: "",
     email: "",
     password: "",
+    phone: "",   // <-- ajouté ici
   });
 
   const { signup, isSigningUp } = useAuthStore();
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) return toast.error("Full name is required");
-    if (!formData.email.trim()) return toast.error("Email is required");
-    if (!/\S+@\S+\.\S+/.test(formData.email)) return toast.error("Invalid email format");
-    if (!formData.password) return toast.error("Password is required");
-    if (formData.password.length < 6) return toast.error("Password must be at least 6 characters");
-
+   if (!formData.fullName.trim()) return toast.error("Le nom complet est requis");
+if (!formData.email.trim()) return toast.error("L'email est requis");
+if (!/\S+@\S+\.\S+/.test(formData.email)) return toast.error("Le format de l'email est invalide");
+if (!formData.phone.trim()) return toast.error("Le numéro de téléphone est requis");
+if (!/^\+243\d{9}$/.test(formData.phone)) return toast.error("Le format du numéro de téléphone est invalide (ex: +243XXXXXXXXX)");
+if (!formData.password) return toast.error("Le mot de passe est requis");
+if (formData.password.length < 6) return toast.error("Le mot de passe doit contenir au moins 6 caractères");
     return true;
   };
 
@@ -48,12 +60,13 @@ const SignUpPage = () => {
               >
                 <MessageSquare className="size-6 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold mt-2">Cree un compte sur Yabiso</h1>
+              <h1 className="text-2xl font-bold mt-2">Crée un compte sur Yabiso</h1>
               <p className="text-base-content/60">Fongola compte nayo</p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 relative">
+            {/* Nom complet */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Nom complet</span>
@@ -72,6 +85,7 @@ const SignUpPage = () => {
               </div>
             </div>
 
+            {/* Email */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Email</span>
@@ -90,6 +104,26 @@ const SignUpPage = () => {
               </div>
             </div>
 
+            {/* Téléphone */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Numéro de téléphone</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Phone className="size-5 text-base-content/40" />
+                </div>
+                <input
+                  type="tel"
+                  className={`input input-bordered w-full pl-10`}
+                  placeholder="+243xxxxxxxxx"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Mot de passe */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Mot de passe</span>
@@ -129,11 +163,13 @@ const SignUpPage = () => {
                 "Crée un compte"
               )}
             </button>
+
+           
           </form>
 
-          <div className="text-center">
+          <div className="text-center mt-8">
             <p className="text-base-content/60">
-              Vous avez deja un compte ?{" "}
+              Vous avez déjà un compte ?{" "}
               <Link to="/login" className="link link-primary">
                 Se connecter
               </Link>

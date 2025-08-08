@@ -28,20 +28,20 @@ const Navbar = () => {
             <div className="flex items-center gap-2.5">
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Link
-    to="/"
-    className="size-9 rounded-lg bg-primary/10 flex items-center justify-center cursor-pointer select-none"
-    title="Retour à l'accueil"
-  >
-    🇲🇭
-  </Link>
+                  to="/"
+                  className="size-9 rounded-lg bg-primary/10 flex items-center justify-center cursor-pointer select-none"
+                  title="Retour à l'accueil"
+                >
+                  🇲🇭
+                </Link>
               </div>
               <h1 className="text-lg font-bold hidden sm:block">Masolo </h1>
             </div>
 
             {/* ✅ SEARCH INPUT MOBILE */}
             <div className="flex-1 mx-3 sm:hidden">
-              <div className="relative hidden">
-                <Search className="absolute hidden left-2 top-2.5 size-4 text-zinc-500" />
+              <div className=" hidden relative">
+                <Search className="  absolute left-2 top-2.5 size-4 text-zinc-500" />
                 <input
                   type="text"
                   placeholder="Rechercher..."
@@ -51,27 +51,25 @@ const Navbar = () => {
                 />
                 {searchTerm && (
                   <div className="absolute top-full left-0 right-0 z-50 bg-base-100 shadow-md rounded-md mt-1 max-h-60 overflow-y-auto">
-                    {searchResults.map((user) => (
-                      
-                      <>
+                    {searchResults.length > 0 ? (
+                      searchResults.map((user) => (
                         <button
-                        key={user._id}
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setSearchTerm("");
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-base-200 text-sm"
-                      >
-                        {user.fullName}
-                      </button>
-                       <img
-                src={user.profilePic}
-                alt=""
-                className="size-9 rounded-full object-cover cursor-pointer hover:ring-2 ring-primary transition hidden sm:block"
-              />
-                      </>
-                    ))}
-                    {searchResults.length === 0 && (
+                          key={user._id}
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setSearchTerm("");
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-base-200 text-sm"
+                        >
+                          <img
+                            src={user.profilePic || "/avatar.png"}
+                            alt={`${user.fullName} profil`}
+                            className="size-7 rounded-full object-cover"
+                          />
+                          {user.fullName}
+                        </button>
+                      ))
+                    ) : (
                       <div className="px-4 py-2 text-sm text-zinc-500">
                         Aucun utilisateur trouvé
                       </div>
@@ -86,22 +84,21 @@ const Navbar = () => {
               <Link to="/settings" className="btn btn-sm">
                 <Settings className="w-4 h-4" />
               </Link>
+              {authUser ? (
+                <div className="flex gap-3">
+                  <Link to="/profile" className="btn btn-sm">
+                    <User className="w-4 h-4" />
+                  </Link>
 
-              <Link to="/profile" className="btn btn-sm">
-                <User className="w-4 h-4" />
-              </Link>
-
-              <button className="btn btn-sm" onClick={logout}>
-                <LogOut className="w-4 h-4" />
-              </button>
-
-              {/* ✅ Profil caché uniquement en mobile */}
-              <img
-                src={authUser?.profilePic || "/avatar.png"}
-                alt="profil"
-                onClick={() => setShowInfos(true)}
-                className="size-9 rounded-full object-cover cursor-pointer hover:ring-2 ring-primary transition hidden sm:block"
-              />
+                  {/* ✅ Profil caché uniquement en desktop */}
+                  <img
+                    src={authUser?.profilePic || "/avatar.png"}
+                    alt="profil"
+                    onClick={() => setShowInfos(true)}
+                    className="size-9 rounded-full object-cover cursor-pointer hover:ring-2 ring-primary transition hidden sm:block"
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

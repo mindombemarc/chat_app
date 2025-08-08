@@ -36,7 +36,7 @@ const Contact = () => {
   return (
     <section className="mb-12 px-4 lg:px-12">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Contact</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Me Contacter</h1>
         <p className="text-gray-600">Vous pouvez me contacter via ce formulaire.</p>
       </div>
 
@@ -44,7 +44,6 @@ const Contact = () => {
         {/* Infos de contact */}
         <div className="w-full lg:w-1/2 space-y-4 text-gray-700">
           <p><strong>Téléphone :</strong> +243 831 634 637</p>
-          <p><strong>Email :</strong> marc.mindombe@email.com</p>
           <p><strong>Adresse :</strong> Kinshasa, République Démocratique du Congo</p>
           <p><strong>LinkedIn :</strong> <a href="https://www.linkedin.com/in/marc-mindombe-978b1b27a/" target="_blank" className="text-blue-600 underline">Voir le profil</a></p>
         </div>
